@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Wallet</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="http://flovault.alexandria.io/assets/js/wallet.js"></script>
+    <script src="http://flovault.alexandria.io/assets/js/litevault-deps.js"></script>
+</head>
+<body>
+
+<p>
+    Register a new wallet. Email is optional.
+    <br>
+    <label for="registerEmailInput">Email Address</label>
+    <input type="text" placeholder="me@example.com" id="registerEmailInput">
+    <br>
+    <label for="registerPassInput">Password</label>
+    <input type="text" placeholder="password" id="registerPassInput">
+    <br>
+    <button id="registerButton">Register</button>
+</p>
+<pre id="registerOutput">
+</pre>
+
+
+<p>
+    Log in with Identifier.
+    <br>
+    <label for="identifierInput">Identifier</label>
+    <input type="text" placeholder="xxxx-xxxx-xxx-xxx" id="identifierInput">
+    <br>
+    <label for="identifierPassInput">Password</label>
+    <input type="text" placeholder="password" id="identifierPassInput">
+    <br>
+    <button id="identifierButton">Identify</button>
+</p>
+<pre id="identifierOutput">
+</pre>
+
+
+<script type="text/javascript">
+    // ToDo: No error cases are handled
+
+    var registerBtn = $("#registerButton");
+    var emailInput = $("#registerEmailInput");
+    var registerPassInput = $("#registerPassInput");
+    var registerOutput = $("#registerOutput");
+
+    var identifierInput = $("#identifierInput");
+    var identifierPassInput = $("#identifierPassInput");
+    var identifierButton = $("#identifierButton");
+    var identifierOutput = $("#identifierOutput");
+
+    registerBtn.click(function () {
+        var data = {};
+        if (emailInput.val().length > 3)
+            data = {email: emailInput.val()};
+
+        $.post("http://flovault.alexandria.io/wallet/create", data, function (response) {
+            console.log("Create Response");
+            console.log(response);
+            registerOutput.text(JSON.stringify(response, null, 2));
+
+            if (response.error){
+                console.error("Register failed :(");
+                return;
+            }
+
+            identifierInput.val(response.identifier);
+
+            wallet = new Wallet(response.identifier, identifierPassInput.val());
+            wallet.setSharedKey(response.shared_key);
+            wallet.store();
+        });
+    });
+
+    identifierButton.click(function () {
+        $.get("http://flovault.alexandria.io/wallet/checkload/" + identifierInput.val(), function (response) {
+            console.log("Check Load Response");
+            console.log(response);
+            identifierOutput.text(JSON.stringify(response, null, 2));
+
+            if (response.gauth_enabled) {
+                console.log("2FA unsupported");
+                // ToDo: add 2FA support, needs further research
+            }
+
+            $.get("http://flovault.alexandria.io/wallet/load/" + identifierInput.val(), function (response) {
+                console.log("Load Response");
+                console.log(response);
+                identifierOutput.text(identifierOutput.text() + "\n" + JSON.stringify(response, null, 2));
+
+                wallet = new Wallet(response.identifier, identifierPassInput.val());
+                wallet.setSharedKey(response.shared_key);
+                wallet.store();
+            });
+        });
+    });
+
+
+</script>
+</body>
+</html>
