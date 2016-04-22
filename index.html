@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <title>Simple Wallet</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-    <script src="http://flovault.alexandria.io/assets/js/wallet.js"></script>
-    <script src="http://flovault.alexandria.io/assets/js/litevault-deps.js"></script>
+    <script src="SimpleWallet.js"></script>
+    <script src="SimpleDeps.js"></script>
 </head>
 <body>
 
@@ -38,6 +38,13 @@
 <pre id="identifierOutput">
 </pre>
 
+<p>
+    <button id="newAddressButton">New Address</button>
+    <button id="refreshAddressButton">Refresh Addresses</button>
+    Addresses/Balances:
+</p>
+<pre id="addressListOutput">
+</pre>
 
 <script type="text/javascript">
     // ToDo: No error cases are handled
@@ -52,6 +59,12 @@
     var identifierButton = $("#identifierButton");
     var identifierOutput = $("#identifierOutput");
 
+    var newAddressButton = $("#newAddressButton");
+    var refreshAddressButton = $("#refreshAddressButton");
+    var addressListOutput = $("#addressListOutput");
+
+    var wallet;
+
     registerBtn.click(function () {
         var data = {};
         if (emailInput.val().length > 3)
@@ -62,7 +75,7 @@
             console.log(response);
             registerOutput.text(JSON.stringify(response, null, 2));
 
-            if (response.error){
+            if (response.error) {
                 console.error("Register failed :(");
                 return;
             }
@@ -86,19 +99,31 @@
                 // ToDo: add 2FA support, needs further research
             }
 
-            $.get("http://flovault.alexandria.io/wallet/load/" + identifierInput.val(), function (response) {
-                console.log("Load Response");
-                console.log(response);
-                identifierOutput.text(identifierOutput.text() + "\n" + JSON.stringify(response, null, 2));
-
-                wallet = new Wallet(response.identifier, identifierPassInput.val());
-                wallet.setSharedKey(response.shared_key);
-                wallet.store();
+            wallet = new Wallet(response.identifier, identifierPassInput.val());
+            wallet.load(function () {
+                console.log("Wallet Post-Load");
+                console.log(wallet);
+                identifierOutput.text(identifierOutput.text() + "\n\nWallet Balance: " + wallet.getTotalBalance());
+                updateAddressList();
             });
         });
     });
 
+    newAddressButton.click(function () {
+        wallet.generateAddress();
+    });
 
+    refreshAddressButton.click(function () {
+        wallet.refreshBalances();
+        updateAddressList();
+    });
+
+    function updateAddressList() {
+        addressListOutput.text("");
+        for (var addr in wallet.balances) {
+            addressListOutput.text(addressListOutput.text() + "\n" + addr + " : " + wallet.balances[addr])
+        }
+    }
 </script>
 </body>
 </html>

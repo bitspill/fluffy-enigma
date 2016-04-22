@@ -1,18 +1,14 @@
-///<reference path="def/jquery/jquery.d.ts" />
-///<reference path="def/jquery.cookie/jquery.cookie.d.ts" />
-///<reference path="def/cryptojs/cryptojs.d.ts" />
-///<reference path="def/bootstrap/bootstrap.d.ts" />
-///<reference path="def/handlebars/handlebars.d.ts" />
 /*
- * lib/wallet.ts
+ * SimpleWallet.js
  *
- * This is the core of the LiteVault, all of this Typescript
+ * This is the <modified> core of the LiteVault, all of this Typescript
  * and/or related javascript is held under the AGPL Licence
  * unless otherwise noted on the Git repository
  *
  * Created by Someguy123 (http://someguy123.com)
+ * Modified by bitspill
  */
-var baseURL = "flovault.alexandria.io";
+var baseURL = "http://flovault.alexandria.io";
 
 var Wallet = (function () {
     function Wallet(identifier, password) {
@@ -104,8 +100,8 @@ var Wallet = (function () {
     Wallet.prototype.store = function () {
         var walletData = this.wallet_serialize();
         console.log("Encrypting data");
-        encWalletData = CryptoJS.AES.encrypt(walletData, this.password, this.CryptoConfig);
-        encWalletDataCipher = encWalletData.toString();
+        var encWalletData = CryptoJS.AES.encrypt(walletData, this.password, this.CryptoConfig);
+        var encWalletDataCipher = encWalletData.toString();
         var _this = this;
         $.post(baseURL + "/wallet/update", {
             identifier: this.identifier,
@@ -118,9 +114,6 @@ var Wallet = (function () {
                     'If you have created new addresses in the past few minutes, ' +
                     'please save their private keys ASAP, as your encrypted wallet' +
                     ' may not have been updated properly on our servers.');
-            }
-            else {
-                _this.callSaveListeners();
             }
         }, "json").fail(function () {
             alert('WARNING: There was an error saving your wallet. ' +
@@ -239,12 +232,6 @@ var Wallet = (function () {
         }
         return allTransactions;
     };
-    Wallet.prototype.getTransactions = function (callback) {
-        var _this = this;
-        $.get(baseURL + '/wallet/addresstxs/' + Object.keys(this.addresses).join(), function (data) {
-            callback(_this.sortTransactions(Array.isArray(data) ? data : [data]));
-        }, "json");
-    };
     Wallet.prototype.sendCoins = function (fromAddress, toAddress, amount) {
         var _this = this;
         if (this.validateKey(toAddress) && this.validateKey(fromAddress)) {
@@ -328,7 +315,6 @@ var Wallet = (function () {
             }
             else {
                 callback(data);
-                _this.callTransactionPushedListeners(data);
             }
             _this.refreshBalances();
         }, "json").fail(function () {
@@ -337,7 +323,6 @@ var Wallet = (function () {
     };
     Wallet.prototype.setBalance = function (address, balance) {
         this.balances[address] = balance;
-        this.callBalanceChangeListeners(this.balances);
     };
     /**
      * getTotalBalance()
@@ -362,53 +347,32 @@ var Wallet = (function () {
         return signed_message.toString('base64');
     };
 
+    /**
+     * wallet_serialize()
+     *
+     * Returns the JSON version of the wallet, including
+     * only the necessities, such as the shared key,
+     * addresses, labels, and private keys
+     *
+     * @param prettify
+     * @returns {string}
+     */
+    Wallet.prototype.wallet_serialize = function (prettify) {
+        if (prettify === void 0) { prettify = false; }
+        var walletdata = ({
+            shared_key: this.shared_key,
+            addresses: this.addresses
+        });
+        if (prettify) {
+            return JSON.stringify(walletdata, null, "\t");
+        }
+        else {
+            return JSON.stringify(walletdata);
+        }
+    };
 
     return Wallet;
 })();
-
-
-function initializeWallet(wallet) {
-    wallet.load(function () {
-        $('.flo-balance').html('0 FLO');
-        setInterval(function () {
-            wallet.refreshBalances();
-        }, 10000);
-
-
-        $('#send-coins-btn').click(function () {
-            var fromAddress = $('#select-my-addresses').val();
-            var toAddress = $('#to-address').val();
-            var amount = $('#send-coins-amount').val();
-            wallet.sendCoins(fromAddress, toAddress, amount);
-        });
-    });
-}
-
-
-$('#register-btn').click(function () {
-    var password = $('#password-txt').val();
-    var password_confirm = $('#password-txt-confirm').val();
-    if (password !== password_confirm) {
-        alert('Password doesn\'t match');
-    }
-    else {
-        $.post('/wallet/create', ($('#email-txt').val() != "") ? {email: $('#email-txt').val()} : null, function (data) {
-            console.log('Received data from creation server:');
-            console.log(data);
-            if (data.error === false) {
-                wallet = new Wallet(data.identifier, password);
-                wallet.setSharedKey(data.shared_key);
-                wallet.store();
-                console.log('Successfully created wallet');
-                $.cookie('identifier', data.identifier);
-            }
-            else {
-                alert("Uh oh! There was an error creating your wallet.");
-            }
-        }, "json");
-    }
-});
-
 
 $('#login-btn').click(function () {
     var identifier = $('#identifier-txt').val(), password = $('#password-txt').val();
