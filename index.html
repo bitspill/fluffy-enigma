@@ -60,6 +60,22 @@
 <pre id="signMessageOutput">
 </pre>
 
+<p>
+    Send Coins.
+    <br>
+    <label for="sendFromInput">From Address</label>
+    <input type="text" id="sendFromInput">
+    <br>
+    <label for="sendToInput">To Address</label>
+    <input type="text" id="sendToInput">
+    <br>
+    <label for="sendAmountInput">Amount</label>
+    <input type="number" id="sendAmountInput">
+    <br>
+    <button id="sendButton">Send</button>
+</p>
+<pre id="sendOutput"></pre>
+
 
 <script type="text/javascript">
     // ToDo: No error cases are handled
@@ -82,6 +98,12 @@
     var signAddressInput = $("#signAddressInput");
     var signMessageButton = $("#signMessageButton");
     var signMessageOutput = $("#signMessageOutput");
+
+    var sendFromInput = $("#sendFromInput");
+    var sendToInput = $("#sendToInput");
+    var sendAmountInput = $("#sendAmountInput");
+    var sendButton = $("#sendButton");
+    var sendOutput = $("#sendOutput");
 
     var wallet;
 
@@ -131,6 +153,7 @@
 
     newAddressButton.click(function () {
         wallet.generateAddress();
+        refreshAddressButton.click();
     });
 
     refreshAddressButton.click(function () {
@@ -148,6 +171,11 @@
     signMessageButton.click(function(){
        var signature = wallet.signMessage(signAddressInput.val(),signMessageInput.val());
         signMessageOutput.text("Signature: " + signature);
+    });
+
+    sendButton.click(function(){
+       wallet.sendCoins(sendFromInput.val(), sendToInput.val(), sendAmountInput.val());
+        refreshAddressButton.click();
     });
 </script>
 </body>
