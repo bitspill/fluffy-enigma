@@ -46,6 +46,21 @@
 <pre id="addressListOutput">
 </pre>
 
+<p>
+    Sign Message.
+    <br>
+    <label for="signAddressInput">Address</label>
+    <input type="text" placeholder="F9c77uxu7HbfVDrYHnTgb3zUJXyR5MoS1n" id="signAddressInput">
+    <br>
+    <label for="signMessageInput">Message</label>
+    <input type="text" placeholder="message" id="signMessageInput">
+    <br>
+    <button id="signMessageButton">Sign</button>
+</p>
+<pre id="signMessageOutput">
+</pre>
+
+
 <script type="text/javascript">
     // ToDo: No error cases are handled
 
@@ -62,6 +77,11 @@
     var newAddressButton = $("#newAddressButton");
     var refreshAddressButton = $("#refreshAddressButton");
     var addressListOutput = $("#addressListOutput");
+
+    var signMessageInput = $("#signMessageInput");
+    var signAddressInput = $("#signAddressInput");
+    var signMessageButton = $("#signMessageButton");
+    var signMessageOutput = $("#signMessageOutput");
 
     var wallet;
 
@@ -124,6 +144,11 @@
             addressListOutput.text(addressListOutput.text() + "\n" + addr + " : " + wallet.balances[addr])
         }
     }
+
+    signMessageButton.click(function(){
+       var signature = wallet.signMessage(signAddressInput.val(),signMessageInput.val());
+        signMessageOutput.text("Signature: " + signature);
+    });
 </script>
 </body>
 </html>
