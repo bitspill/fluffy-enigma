@@ -232,7 +232,7 @@ var Wallet = (function () {
         }
         return allTransactions;
     };
-    Wallet.prototype.sendCoins = function (fromAddress, toAddress, amount) {
+    Wallet.prototype.sendCoins = function (fromAddress, toAddress, amount, txComment) {
         var _this = this;
         if (this.validateKey(toAddress) && this.validateKey(fromAddress)) {
             if (fromAddress in this.addresses && this.validateKey(this.addresses[fromAddress].priv, true)) {
@@ -284,6 +284,30 @@ var Wallet = (function () {
                     console.log('Sending amount %s to address %s - Change value: %s - Fee in satoshis: %s - Fee in standard: %s', amount / Math.pow(10, 8), toAddress, changeValue / Math.pow(10, 8), estimatedFee, (estimatedFee / Math.pow(10, 8)));
                     var rawHex = tx.toHex();
                     console.log(rawHex);
+
+                    if (typeof txComment != "undefined" && txComment.length > 0) {
+                        console.log("Comment:");
+                        console.log(txComment);
+
+                        var lenBuffer = Bitcoin.bufferutils.varIntBuffer(txComment.length);
+                        var hexComment = '';
+
+                        for (var i = 0; i < lenBuffer.length; ++i) {
+                            hexComment += toHex(lenBuffer[i]);
+                        }
+                        for (i = 0; i < txComment.length; ++i) {
+                            hexComment += toHex(txComment.charCodeAt(i));
+                        }
+                        rawHex += hexComment;
+
+                        // bump transaction version so it reads the comment
+                        if (rawHex[1] === '1')
+                            rawHex[1] = '2';
+
+                        console.log("With Comment:");
+                        console.log(rawHex);
+                    }
+
                     _this.pushTX(rawHex, function () {
                         try {
                             beep(300, 4);
@@ -358,7 +382,9 @@ var Wallet = (function () {
      * @returns {string}
      */
     Wallet.prototype.wallet_serialize = function (prettify) {
-        if (prettify === void 0) { prettify = false; }
+        if (prettify === void 0) {
+            prettify = false;
+        }
         var walletdata = ({
             shared_key: this.shared_key,
             addresses: this.addresses
@@ -394,3 +420,7 @@ $('#login-btn').click(function () {
         alert('error loading wallet');
     });
 });
+
+function toHex(d) {
+    return ("0" + (Number(d).toString(16))).slice(-2).toUpperCase()
+}
