@@ -6,6 +6,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
     <script src="SimpleWallet.js"></script>
     <script src="SimpleDeps.js"></script>
+    <script src="libraryd-js.js"></script>
 </head>
 <body>
 
@@ -150,8 +151,6 @@
             wallet.load(function () {
                 console.log("Wallet Post-Load");
                 console.log(wallet);
-                identifierOutput.text(identifierOutput.text() + "\n\nWallet Balance: " + wallet.getTotalBalance());
-                updateAddressList();
             });
         });
     });
