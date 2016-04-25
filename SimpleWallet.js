@@ -301,10 +301,10 @@ var Wallet = (function () {
                         rawHex += hexComment;
 
                         // bump transaction version so it reads the comment
-                        if (rawHex[1] === '1')
-                            rawHex[1] = '2';
+                        if (rawHex.slice(0,2) == "01")
+                            rawHex = "02" + rawHex.slice(2);
 
-                        console.log("With Comment:");
+                        console.log("Raw");
                         console.log(rawHex);
                     }
 
