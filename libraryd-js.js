@@ -2,6 +2,7 @@
 
 var LibraryDJS = LibraryDJS || {};
 
+// returns directly
 LibraryDJS.signPublisher = function (wallet, name, address) {
     // http://api.alexandria.io/#sign-publisher-announcement-message
     var toSign = name + "-" + address + "-" + unixTime();
@@ -16,6 +17,20 @@ LibraryDJS.signPublisher = function (wallet, name, address) {
     }
 };
 
+// returns directly
+LibraryDJS.signArtifact = function (wallet, ipfs, address) {
+    // http://api.alexandria.io/#sign-publisher-announcement-message
+    var toSign = ipfs + "-" + address + "-" + unixTime();
+
+    var signed = wallet.signMessage(address, toSign);
+
+    return {
+        status: "success",
+        response: [
+            signed
+        ]
+    }
+};
 
 // callback is (errorString, response) response=http://api.alexandria.io/#announce-new-publisher
 LibraryDJS.registerPublisher = function (wallet, name, address, bitMessage, email, signature, callback) {
