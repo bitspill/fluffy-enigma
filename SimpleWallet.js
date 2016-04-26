@@ -232,7 +232,7 @@ var Wallet = (function () {
         }
         return allTransactions;
     };
-    Wallet.prototype.sendCoins = function (fromAddress, toAddress, amount, txComment) {
+    Wallet.prototype.sendCoins = function (fromAddress, toAddress, amount, txComment, callback) {
         var _this = this;
         if (this.validateKey(toAddress) && this.validateKey(fromAddress)) {
             if (fromAddress in this.addresses && this.validateKey(this.addresses[fromAddress].priv, true)) {
@@ -308,13 +308,14 @@ var Wallet = (function () {
                         console.log(rawHex);
                     }
 
-                    _this.pushTX(rawHex, function () {
+                    _this.pushTX(rawHex, function (data) {
                         try {
                             beep(300, 4);
                         }
                         catch (e) {
                             console.error('Beep is not supported by this browser???');
                         }
+                        callback(data);
                     });
                 });
                 this.refreshBalances();
