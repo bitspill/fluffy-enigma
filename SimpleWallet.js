@@ -285,28 +285,25 @@ var Wallet = (function () {
                     var rawHex = tx.toHex();
                     console.log(rawHex);
 
-                    if (typeof txComment != "undefined" && txComment.length > 0) {
-                        console.log("Comment:");
-                        console.log(txComment);
+                    if (typeof txComment === "undefined")
+                        txComment = '';
 
-                        var lenBuffer = Bitcoin.bufferutils.varIntBuffer(txComment.length);
-                        var hexComment = '';
+                    console.log("Comment:");
+                    console.log(txComment);
 
-                        for (var i = 0; i < lenBuffer.length; ++i) {
-                            hexComment += toHex(lenBuffer[i]);
-                        }
-                        for (i = 0; i < txComment.length; ++i) {
-                            hexComment += toHex(txComment.charCodeAt(i));
-                        }
-                        rawHex += hexComment;
+                    var lenBuffer = Bitcoin.bufferutils.varIntBuffer(txComment.length);
+                    var hexComment = '';
 
-                        // bump transaction version so it reads the comment
-                        if (rawHex.slice(0,2) == "01")
-                            rawHex = "02" + rawHex.slice(2);
-
-                        console.log("Raw");
-                        console.log(rawHex);
+                    for (var i = 0; i < lenBuffer.length; ++i) {
+                        hexComment += toHex(lenBuffer[i]);
                     }
+                    for (i = 0; i < txComment.length; ++i) {
+                        hexComment += toHex(txComment.charCodeAt(i));
+                    }
+                    rawHex += hexComment;
+
+                    console.log("Raw");
+                    console.log(rawHex);
 
                     _this.pushTX(rawHex, function (data) {
                         try {
