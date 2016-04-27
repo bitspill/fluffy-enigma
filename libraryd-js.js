@@ -2,35 +2,52 @@
 
 var LibraryDJS = LibraryDJS || {};
 
-// returns directly
-LibraryDJS.signPublisher = function (wallet, name, address) {
+// returns signature directly
+LibraryDJS.signPublisher = function (wallet, name, address, time) {
     // http://api.alexandria.io/#sign-publisher-announcement-message
-    var toSign = name + "-" + address + "-" + unixTime();
+    var toSign = name + "-" + address + "-" + time;
 
-    var signed = wallet.signMessage(address, toSign);
-
-    return {
-        status: "success",
-        response: [
-            signed
-        ]
-    }
+    return wallet.signMessage(address, toSign);
 };
 
-// returns directly
-LibraryDJS.signArtifact = function (wallet, ipfs, address) {
+// returns signature directly
+LibraryDJS.signArtifact = function (wallet, ipfs, address, time) {
     // http://api.alexandria.io/#sign-publisher-announcement-message
-    var toSign = ipfs + "-" + address + "-" + unixTime();
+    var toSign = ipfs + "-" + address + "-" + time;
 
-    var signed = wallet.signMessage(address, toSign);
-
-    return {
-        status: "success",
-        response: [
-            signed
-        ]
-    }
+    return wallet.signMessage(address, toSign);
 };
+// callback is (errorString, response) response=http://api.alexandria.io/#publish-new-artifact
+LibraryDJS.publishArtifact = function (wallet, ipfs, address, alexandriaMedia, callback) {
+    var time = unixTime();
+
+    var signature = LibraryDJS.signArtifact(wallet, ipfs, address, time);
+
+    var data = {
+        "media-data": {
+            "alexandria-media": alexandriaMedia,
+            "signature": signature
+        }
+    };
+
+    data["media-data"]["alexandria-media"].timestamp = parseInt(time);
+
+    LibraryDJS.Send(wallet, JSON.stringify(data), address, 0.001, function (err, txIDs) {
+        if (err != null)
+            callback(err,
+                JSON.stringify({
+                    status: "failure",
+                    response: err
+                }));
+        else
+            callback(null,
+                JSON.stringify({
+                    status: "success",
+                    response: txIDs
+                }));
+    });
+};
+
 
 // callback is (errorString, response) response=http://api.alexandria.io/#announce-new-publisher
 LibraryDJS.registerPublisher = function (wallet, name, address, bitMessage, email, signature, callback) {
@@ -38,19 +55,23 @@ LibraryDJS.registerPublisher = function (wallet, name, address, bitMessage, emai
 };
 
 // callback is (errorString, response) response=http://api.alexandria.io/#announce-new-publisher
-LibraryDJS.announcePublisher = function (wallet, name, address, bitMessage, email, signature, callback) {
+LibraryDJS.announcePublisher = function (wallet, name, address, bitMessage, email, callback) {
+    var time = unixTime();
+
+    var signature = LibraryDJS.signPublisher(wallet, name, address, time);
+
     var data = {
         "alexandria-publisher": {
             "name": name,
             "address": address,
-            "timestamp": unixTime(),
+            "timestamp": parseInt(time),
             "bitmessage": bitMessage,
             "email": CryptoJS.MD5(email).toString()
         },
         "signature": signature
     };
 
-    LibraryDJS.Send(JSON.stringify(data), function (err, txIDs) {
+    LibraryDJS.Send(wallet, JSON.stringify(data), address, 0.002, function (err, txIDs) {
         if (err != null)
             callback(err,
                 JSON.stringify({
@@ -72,14 +93,14 @@ function unixTime() {
 }
 
 // callback is (errorString, txIDs Array)
-LibraryDJS.Send = function (jsonData, callback) {
-    LibraryDJS.sendToBlockChain(jsonData, function (err, txIDs) {
+LibraryDJS.Send = function (wallet, jsonData, address, amount, callback) {
+    LibraryDJS.sendToBlockChain(wallet, jsonData, address, amount, function (err, txIDs) {
         callback(err, txIDs);
     });
 };
 
 // callback is (errorString, txIDs Array)
-LibraryDJS.sendToBlockChain = function (txComment, address, amount, callback) {
+LibraryDJS.sendToBlockChain = function (wallet, txComment, address, amount, callback) {
 
     // set tx fee
     // feature non existent in js currently
@@ -93,17 +114,17 @@ LibraryDJS.sendToBlockChain = function (txComment, address, amount, callback) {
 
 
     if (txComment.length > TXCOMMENT_MAX_LEN) {
-        LibraryDJS.multiPart(txComment, address, amount, callback);
+        LibraryDJS.multiPart(wallet, txComment, address, amount, callback);
     }
     else {
-        wallet.sendCoins(address, address, amount, txComment, function (data) {
+        wallet.sendCoins(address, address, amount, txComment, function (err, data) {
             callback(null, [data.txid]);
         });
     }
 };
 
 // callback is (errorString, txIDs Array)
-LibraryDJS.multiPart = function (txComment, address, amount, callback) {
+LibraryDJS.multiPart = function (wallet, txComment, address, amount, callback) {
     var txIDs = [];
 
     var multiPartPrefix = "alexandria-media-multipart(";
@@ -124,7 +145,7 @@ LibraryDJS.multiPart = function (txComment, address, amount, callback) {
     var multiPart = multiPartPrefix + part.toString() + "," + max.toString() +
         "," + address + "," + reference + "," + signature + "," + "):" + data;
 
-    wallet.sendCoins(address, address, amount, multiPart, function(data){
+    wallet.sendCoins(address, address, amount, multiPart, function (err, data) {
         txIDs[txIDs.length] = data.txid;
         reference = data.txid;
 
@@ -138,10 +159,10 @@ LibraryDJS.multiPart = function (txComment, address, amount, callback) {
             multiPart = multiPartPrefix + part.toString() + "," + max.toString() +
                 "," + address + "," + reference + "," + signature + "," + "):" + data;
 
-            wallet.sendCoins(address, address, amount, multiPart, function(data){
+            wallet.sendCoins(address, address, amount, multiPart, function (err, data) {
                 txIDs[txIDs.length] = data.txid;
                 ++count;
-                if(count==max){
+                if (count == max) {
                     callback(null, txIDs);
                 }
             });
