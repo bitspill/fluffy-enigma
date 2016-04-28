@@ -23,6 +23,7 @@ var Wallet = (function () {
         };
         this.identifier = identifier;
         this.password = password;
+        this.known_spent = [];
     }
 
     /**
@@ -162,6 +163,23 @@ var Wallet = (function () {
             }
         }, "json");
     };
+
+    /**
+     * Attempts to remove inputs that are known to be spent.
+     * This helps avoid problems when sending multiple transactions shortly
+     * after eachother.
+     */
+    Wallet.prototype.removeSpent = function (coins) {
+        var clean_coins = coins;
+        for (var v in this.known_spent) {
+            for (var k in coins) {
+                if (JSON.stringify(coins[k]) == JSON.stringify(this.known_spent[v])) {
+                    delete clean_coins[k];
+                }
+            }
+        }
+        return clean_coins;
+    };
     /**
      * calculateBestUnspent()
      *
@@ -196,16 +214,16 @@ var Wallet = (function () {
         });
         var CutUnspent = [], CurrentAmount = 0;
         for (var v in unspents) {
-            if (parseFloat(unspents[v].amount) > amount) {
-                CurrentAmount += parseFloat(unspents[v].amount);
-                CutUnspent.push(unspents[v]);
-                break;
-            }
-            // CurrentAmount += parseFloat(unspents[v].amount);
-            // CutUnspent.push(unspents[v]);
-            // if (CurrentAmount > amount) {
+            // if (parseFloat(unspents[v].amount) > amount) {
+            //     CurrentAmount += parseFloat(unspents[v].amount);
+            //     CutUnspent.push(unspents[v]);
             //     break;
             // }
+            CurrentAmount += parseFloat(unspents[v].amount);
+            CutUnspent.push(unspents[v]);
+            if (CurrentAmount > amount) {
+                break;
+            }
         }
         if (CurrentAmount < amount) {
             throw "Not enough coins in unspents to reach target amount";
@@ -264,7 +282,8 @@ var Wallet = (function () {
                     return;
                 }
                 this.getUnspent(fromAddress, function (data) {
-                    data = _this.calculateBestUnspent(amount, data);
+                    var clean_unspent = _this.removeSpent(data);
+                    data = _this.calculateBestUnspent(amount, clean_unspent);
                     console.log(data);
                     // temporary constant
                     var minFeePerKb = 100000;
@@ -281,6 +300,7 @@ var Wallet = (function () {
                     for (var v in unspents) {
                         if (unspents[v].confirmations) {
                             tx.addInput(unspents[v].txid, unspents[v].vout);
+                            _this.known_spent.push(unspents[v]);
                         }
                     }
                     tx.addOutput(toAddress, amount);
