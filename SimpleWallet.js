@@ -24,6 +24,7 @@ var Wallet = (function () {
         this.identifier = identifier;
         this.password = password;
         this.known_spent = [];
+        this.known_unspent = [];
     }
 
     /**
@@ -170,6 +171,8 @@ var Wallet = (function () {
      * after eachother.
      */
     Wallet.prototype.removeSpent = function (coins) {
+        console.log("removeSpent");
+        console.log(JSON.stringify(coins));
         var clean_coins = coins;
         for (var v in this.known_spent) {
             for (var k in coins) {
@@ -178,6 +181,7 @@ var Wallet = (function () {
                 }
             }
         }
+        console.log(JSON.stringify(clean_coins));
         return clean_coins;
     };
     /**
@@ -193,6 +197,8 @@ var Wallet = (function () {
      * @returns {{unspent: Array<UnspentTX>, total: number}}
      */
     Wallet.prototype.calculateBestUnspent = function (amount, unspents) {
+        console.log("calcBestUnspent");
+        console.log(unspents);
         // note: unspents = [ {tx, amount, n, confirmations, script}, ... ]
         // TODO: implement a real algorithm to determine the best unspents
         // e.g. compare the size to the confirmations so that larger coins
@@ -282,7 +288,12 @@ var Wallet = (function () {
                     return;
                 }
                 this.getUnspent(fromAddress, function (data) {
-                    var clean_unspent = _this.removeSpent(data);
+                    var combine = data;
+                    for (var i = 0; i < _this.known_unspent.length; ++i)
+                        if (_this.known_unspent[i].address == fromAddress)
+                            combine.push(_this.known_unspent[i]);
+
+                    var clean_unspent = _this.removeSpent(combine);
                     data = _this.calculateBestUnspent(amount, clean_unspent);
                     console.log(data);
                     // temporary constant
@@ -333,7 +344,7 @@ var Wallet = (function () {
                     var lenBuffer = Bitcoin.bufferutils.varIntBuffer(txComment.length);
                     var hexComment = '';
 
-                    for (var i = 0; i < lenBuffer.length; ++i) {
+                    for (i = 0; i < lenBuffer.length; ++i) {
                         hexComment += toHex(lenBuffer[i]);
                     }
                     for (i = 0; i < txComment.length; ++i) {
@@ -345,6 +356,14 @@ var Wallet = (function () {
                     console.log(rawHex);
 
                     _this.pushTX(rawHex, function (data) {
+                        if (changeValue >= minFeePerKb)
+                            _this.known_unspent.push({
+                                address: fromAddress,
+                                txid: data.txid,
+                                vout: 1,
+                                confirmations: -1,
+                                amount: changeValue / Math.pow(10, 8)
+                            });
                         try {
                             beep(300, 4);
                         }
