@@ -21,31 +21,31 @@ LibraryDJS.signArtifact = function (wallet, ipfs, address, time) {
 LibraryDJS.publishArtifact = function (wallet, ipfs, address, alexandriaMedia, callback) {
     var time = unixTime();
 
-    var test = {
-        "torrent": "Qmeke1CyonqgKErvGhE18WLBuhrLaScbpSAS6vGLuoSCXM",
-        "publisher": "F6yEsikfYQPRAEL8FfDzumLqPD9WDPmKtK",
-        "timestamp": 0,
-        "type": "music",
-        "payment": {},
-        "info": {
-            "title": "Lady J",
-            "description": "Lady J with a really long description so it goes into multiple parts and really tests stuff.",
-            "year": 2003,
-            "extra-info": {
-                "filename": "320bit_mp3/10%20Lady%20J.mp3",
-                "filetype": "album track",
-                "displayname": "Lady J",
-                "albumtrack": "10",
-                "runtime": 241
-            }
-        }
-    };
-    ipfs = "Qmeke1CyonqgKErvGhE18WLBuhrLaScbpSAS6vGLuoSCXM";
+    // var test = {
+    //     "torrent": "Qmeke1CyonqgKErvGhE18WLBuhrLaScbpSAS6vGLuoSCXM",
+    //     "publisher": "F6yEsikfYQPRAEL8FfDzumLqPD9WDPmKtK",
+    //     "timestamp": 0,
+    //     "type": "music",
+    //     "payment": {},
+    //     "info": {
+    //         "title": "Lady J",
+    //         "description": "Lady J with a really long description so it goes into multiple parts and really tests stuff.",
+    //         "year": 2003,
+    //         "extra-info": {
+    //             "filename": "320bit_mp3/10%20Lady%20J.mp3",
+    //             "filetype": "album track",
+    //             "displayname": "Lady J",
+    //             "albumtrack": "10",
+    //             "runtime": 241
+    //         }
+    //     }
+    // };
+    // ipfs = "Qmeke1CyonqgKErvGhE18WLBuhrLaScbpSAS6vGLuoSCXM";
 
     var signature = LibraryDJS.signArtifact(wallet, ipfs, address, time);
 
     var data = {
-        "alexandria-media": test, //alexandriaMedia,
+        "alexandria-media": alexandriaMedia, // test,
         signature: signature
     };
 
@@ -129,11 +129,10 @@ LibraryDJS.sendToBlockChain = function (wallet, txComment, address, amount, call
     // change returns to sender currently
 
     // over sized?
-    // over sized?
     if (txComment.length > (CHOP_MAX_LEN * 10)) {
         callback("txComment is too large to fit within 10 multipart transactions. try making it smaller!");
     }
-    else if (txComment.length > TXCOMMENT_MAX_LEN) {
+   else if (txComment.length > TXCOMMENT_MAX_LEN) {
         LibraryDJS.multiPart(wallet, txComment, address, amount, callback);
     }
     else {

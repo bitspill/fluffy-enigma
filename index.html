@@ -81,6 +81,21 @@
 </p>
 <pre id="sendOutput"></pre>
 
+<p>
+    Bulk Publish.
+    <br>
+    <label for="bpAddress">Address</label>
+    <input type="text" placeholder="F9c77uxu7HbfVDrYHnTgb3zUJXyR5MoS1n"
+           id="bpAddress">
+    <br>
+    <label for="bpJSON">JSON</label>
+    <textarea id="bpJSON"></textarea>
+    <br>
+    <button id="bpPublish">Publish</button>
+</p>
+<pre id="bpOutput">
+</pre>
+
 
 <script type="text/javascript">
     // ToDo: No error cases are handled
@@ -110,6 +125,13 @@
     var sendCommentInput = $("#sendCommentInput");
     var sendButton = $("#sendButton");
     var sendOutput = $("#sendOutput");
+
+
+    var bpAddress = $("#bpAddress");
+    var bpJSON = $("#bpJSON");
+    var bpPublish = $("#bpPublish");
+    var bpOutput = $("#bpOutput");
+    // ToDo: this shit.
 
     var wallet;
 
