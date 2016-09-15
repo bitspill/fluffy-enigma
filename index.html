@@ -203,6 +203,28 @@
         wallet.sendCoins(sendFromInput.val(), sendToInput.val(), sendAmountInput.val(), sendCommentInput.val());
         refreshAddressButton.click();
     });
+
+    bpPublish.click(function () {
+        var data = JSON.parse(bpJSON.val());
+        var addr = bpAddress.val();
+
+        console.log("bpPublish");
+        console.log(data);
+
+        for (var i in data) {
+            if (data.hasOwnProperty(i)) {
+                LibraryDJS.publishArtifact(wallet, data[i].torrent, addr, data[i], function (err, data) {
+                    if (err!=null){
+                        bpOutput.append("\n"+err);
+                    }
+                    else{
+                        bpOutput.append("\n"+data);
+                    }
+                });
+            }
+        }
+
+    });
 </script>
 </body>
 </html>
