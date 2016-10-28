@@ -211,20 +211,22 @@
         console.log("bpPublish");
         console.log(data);
 
-        for (var i in data) {
-            if (data.hasOwnProperty(i)) {
-                LibraryDJS.publishArtifact(wallet, data[i].torrent, addr, data[i], function (err, data) {
-                    if (err!=null){
-                        bpOutput.append("\n"+err);
-                    }
-                    else{
-                        bpOutput.append("\n"+data);
-                    }
-                });
-            }
-        }
+        publishThingyThang(data, 0, addr)
 
     });
+
+    function publishThingyThang(arr, index, addr) {
+        LibraryDJS.publishArtifact(wallet, arr[index].torrent, addr, arr[index], function (err, data) {
+            if (err != null) {
+                bpOutput.append("\n" + err);
+            }
+            else {
+                bpOutput.append("\n" + data);
+                if (index + 1 < arr.length)
+                    publishThingyThang(arr, index + 1, addr);
+            }
+        });
+    }
 </script>
 </body>
 </html>
